@@ -17,8 +17,10 @@ WebviewtutorialAudioProcessorEditor::WebviewtutorialAudioProcessorEditor(
   // Make sure that before the constructor has finished, you've set the
   // editor's size to whatever you need it to be.
   addAndMakeVisible(webComponent);
-  // webComponent.goToURL("http://localhost:5173/");
-  webComponent.goToURL(juce::WebBrowserComponent::getResourceProviderRoot());
+
+  webComponent.goToURL("http://localhost:5173/");
+  // webComponent.goToURL(juce::WebBrowserComponent::getResourceProviderRoot());
+
   setSize(500, 500);
 }
 
@@ -52,10 +54,6 @@ WebviewtutorialAudioProcessorEditor::getResource(const juce::String &url) {
 
   if (stream != nullptr) {
     static juce::ZipFile archive{stream.get(), false};
-    DBG("archive size: " << archive.getNumEntries());
-    DBG("url: " << urlToRetrive);
-    DBG("test_entry_index: " << archive.getIndexOfFileName(urlToRetrive));
-    DBG("file name of index=1: " << archive.getEntry(1)->filename);
 
     if (auto *entry = archive.getEntry(urlToRetrive)) {
       DBG("entry: " << entry->filename);
