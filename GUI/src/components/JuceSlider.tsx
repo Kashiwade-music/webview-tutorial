@@ -1,20 +1,20 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 // @ts-expect-error Juce does not have types
 import * as Juce from "juce-framework-frontend";
-import { Flex, Slider } from "@radix-ui/themes";
+import { Slider } from "@radix-ui/themes";
 
 interface JuceSliderProps {
   identifier: string;
-  title: string;
   defaultScaledValue: number;
   orientation: "vertical" | "horizontal";
+  style: React.CSSProperties;
 }
 
 const JuceSlider: React.FC<JuceSliderProps> = ({
   identifier,
-  title,
   defaultScaledValue,
   orientation,
+  style,
 }) => {
   const sliderState = Juce.getSliderState(identifier);
   const defaultNomalisedValue = Math.pow(
@@ -25,19 +25,20 @@ const JuceSlider: React.FC<JuceSliderProps> = ({
   const [value, setValue] = useState(sliderState.getNormalisedValue());
   const [properties, setProperties] = useState(sliderState.properties);
 
-  const handleChange = (newValue: number[]) => {
-    sliderState.setNormalisedValue(newValue[0]);
-    setValue(newValue);
+  const changeJUCEParamValue = (newNormalisedValue: number[]) => {
+    sliderState.setNormalisedValue(newNormalisedValue[0]);
+    setValue(newNormalisedValue[0]);
   };
 
   useEffect(() => {
-    const updateValue = () => setValue(sliderState.getNormalisedValue());
-    const updateProperties = () => setProperties(sliderState.properties);
+    const updateWebViewValue = () => setValue(sliderState.getNormalisedValue());
+    const updateWebViewProperties = () => setProperties(sliderState.properties);
 
     const valueListenerId =
-      sliderState.valueChangedEvent.addListener(updateValue);
-    const propertiesListenerId =
-      sliderState.propertiesChangedEvent.addListener(updateProperties);
+      sliderState.valueChangedEvent.addListener(updateWebViewValue);
+    const propertiesListenerId = sliderState.propertiesChangedEvent.addListener(
+      updateWebViewProperties
+    );
 
     return () => {
       sliderState.valueChangedEvent.removeListener(valueListenerId);
@@ -47,7 +48,7 @@ const JuceSlider: React.FC<JuceSliderProps> = ({
 
   const handleClick = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     if (event.ctrlKey) {
-      handleChange([defaultNomalisedValue]);
+      changeJUCEParamValue([defaultNomalisedValue]);
     }
   };
 
@@ -57,25 +58,25 @@ const JuceSlider: React.FC<JuceSliderProps> = ({
       Math.max(value - event.deltaY * stepSize, 0),
       1
     );
-    handleChange([clampedValue]);
+    changeJUCEParamValue([clampedValue]);
   };
 
   return (
-    <Slider
-      defaultValue={[value]}
-      value={[value]}
-      orientation={orientation}
-      size="1"
-      onWheel={handleWheel}
-      onClick={handleClick}
-      onValueChange={handleChange}
-      min={0}
-      max={1}
-      step={0.001}
-      style={{
-        height: "300px",
-      }}
-    />
+    <>
+      <Slider
+        defaultValue={[value]}
+        value={[value]}
+        orientation={orientation}
+        size="1"
+        onWheel={handleWheel}
+        onClick={handleClick}
+        onValueChange={changeJUCEParamValue}
+        min={0}
+        max={1}
+        step={0.001}
+        style={style}
+      />
+    </>
   );
 };
 

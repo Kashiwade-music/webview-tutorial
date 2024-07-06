@@ -7,7 +7,11 @@ import "./global.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <Theme>
+    <Theme
+      appearance="dark"
+      panelBackground="translucent"
+      hasBackground={false}
+    >
       <App />
     </Theme>
   </React.StrictMode>
