@@ -7,12 +7,14 @@ interface JuceSliderTextBoxProps {
   identifier: string;
   digits: number;
   suffix?: string;
+  style?: React.CSSProperties;
 }
 
 const JuceSliderTextBox: React.FC<JuceSliderTextBoxProps> = ({
   identifier,
   digits,
   suffix,
+  style,
 }) => {
   const sliderState = Juce.getSliderState(identifier);
   const [scaledValue, setScaledValue] = useState(sliderState.getScaledValue());
@@ -57,7 +59,7 @@ const JuceSliderTextBox: React.FC<JuceSliderTextBoxProps> = ({
       onChange={(event) => {
         setScaledTempValue(event.target.value);
       }}
-      style={{ textAlign: "center" }}
+      style={style}
       onFocus={(event) => {
         setScaledTempValue(scaledValue.toFixed(digits));
         setIsFocused(true);

@@ -11,6 +11,9 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       appearance="dark"
       panelBackground="translucent"
       hasBackground={false}
+      style={{
+        height: "100vh",
+      }}
     >
       <App />
     </Theme>

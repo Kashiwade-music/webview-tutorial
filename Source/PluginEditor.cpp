@@ -21,7 +21,7 @@ WebviewtutorialAudioProcessorEditor::WebviewtutorialAudioProcessorEditor(
   webComponent.goToURL("http://localhost:5173/");
   // webComponent.goToURL(juce::WebBrowserComponent::getResourceProviderRoot());
 
-  setSize(500, 500);
+  setSize(170, 650);
 }
 
 WebviewtutorialAudioProcessorEditor::~WebviewtutorialAudioProcessorEditor() {}
