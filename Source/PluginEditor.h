@@ -15,7 +15,8 @@
 //==============================================================================
 /**
  */
-class WebviewtutorialAudioProcessorEditor : public juce::AudioProcessorEditor {
+class WebviewtutorialAudioProcessorEditor : public juce::AudioProcessorEditor,
+                                            private juce ::Timer {
  public:
   WebviewtutorialAudioProcessorEditor(WebviewtutorialAudioProcessor &,
                                       juce::AudioProcessorValueTreeState &vts);
@@ -24,6 +25,8 @@ class WebviewtutorialAudioProcessorEditor : public juce::AudioProcessorEditor {
   //==============================================================================
   void paint(juce::Graphics &) override;
   void resized() override;
+
+  void timerCallback() override;
 
  private:
   // This reference is provided as a quick way for your editor to
@@ -73,6 +76,8 @@ class WebviewtutorialAudioProcessorEditor : public juce::AudioProcessorEditor {
           .withResourceProvider(
               [this](const auto &url) { return getResource(url); },
               juce::URL{"http://localhost:5173/"}.getOrigin())};
+
+  std::deque<juce::Array<juce::var>> spectrumDataFrames;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(
       WebviewtutorialAudioProcessorEditor)

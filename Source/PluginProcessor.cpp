@@ -167,6 +167,13 @@ void WebviewtutorialAudioProcessor::processBlock(
 
     // ..do something to the data...
   }
+
+  const juce::SpinLock::ScopedTryLockType lock(audioBufferLock);
+
+  if (!lock.isLocked()) return;
+
+  audioBuffer.addFrom(0, 0, buffer, 0, 0, buffer.getNumSamples());
+  audioBuffer.addFrom(1, 0, buffer, 1, 0, buffer.getNumSamples());
 }
 
 //==============================================================================
