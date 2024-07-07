@@ -2,6 +2,7 @@ import { Flex, Card, Heading } from "@radix-ui/themes";
 import JuceSlider from "./components/JuceSlider";
 import JuceSliderTextBox from "./components/JuceSliderTextBox";
 import JuceComboBox from "./components/JuceComboBox";
+import AudioMeter from "./components/AudioMeter";
 
 function App() {
   return (
@@ -67,6 +68,7 @@ function App() {
                 width: "50px",
               }}
             />
+            <AudioMeter />
             <JuceSliderTextBox
               identifier="gain"
               digits={2}

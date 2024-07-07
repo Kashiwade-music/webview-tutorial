@@ -22,6 +22,7 @@ WebviewtutorialAudioProcessorEditor::WebviewtutorialAudioProcessorEditor(
   // webComponent.goToURL(juce::WebBrowserComponent::getResourceProviderRoot());
 
   setSize(170, 650);
+  startTimerHz(30);
 }
 
 WebviewtutorialAudioProcessorEditor::~WebviewtutorialAudioProcessorEditor() {}
@@ -46,31 +47,33 @@ void WebviewtutorialAudioProcessorEditor::timerCallback() {
 
   // SpinLock::ScopedLockTypeを使ってロックを取得します。
   // これにより、processorRef.spectrumDataへのアクセスがスレッドセーフになります。
-  juce::SpinLock::ScopedLockType lock{audioProcessor.spectrumDataLock};
+  juce::SpinLock::ScopedLockType lock{audioProcessor.audioBufferLock};
 
-  // frameという配列を作成し、processorRef.spectrumDataのデータをコピーします。
-  // ただし、先頭の要素は除外しています（iが1から始まるため）。
-  juce::Array<juce::var> frame;
-  for (size_t i = 1; i < audioProcessor.spectrumData.size(); ++i)
-    frame.add(audioProcessor.spectrumData[i]);
+  // frameという配列を作成し、processorRef.audioBufferLockのデータの各チャンネルの最大値を追加しています。
+  juce::Array<juce::var> bufferLeft;
+  juce::Array<juce::var> bufferRight;
+  bufferLeft.add(audioProcessor.audioBuffer.getMagnitude(
+      0, 0, audioProcessor.audioBuffer.getNumSamples()));
+  bufferRight.add(audioProcessor.audioBuffer.getMagnitude(
+      1, 0, audioProcessor.audioBuffer.getNumSamples()));
 
-  // 作成したframeをstd::moveで spectrumDataFramesに追加します。
-  //  このとき、ムーブセマンティクスを使用して効率的にデータを移動させています。
-  spectrumDataFrames.push_back(std::move(frame));
+  // reset
+  audioProcessor.audioBuffer.clear();
 
-  // spectrumDataFramesのサイズがnumFramesBufferedを超えた場合、古いフレームを削除します。
-  while (spectrumDataFrames.size() > numFramesBuffered)
-    spectrumDataFrames.pop_front();
+  // 作成したbufferをaudioDataFrameLeftとRightに追加します。
+  audioDataFrameLeft.push_back(std::move(bufferLeft));
+  audioDataFrameRight.push_back(std::move(bufferRight));
 
-  // コールバックの呼び出し回数をカウントするための変数を初期化します。
-  static juce::int64 callbackCounter = 0;
+  // audioDataFrameLeftのサイズがnumFramesBufferedを超えた場合、古いフレームを削除します。
+  while (audioDataFrameLeft.size() > numFramesBuffered)
+    audioDataFrameLeft.pop_front();
+  while (audioDataFrameRight.size() > numFramesBuffered)
+    audioDataFrameRight.pop_front();
 
   // spectrumDataFramesのサイズがnumFramesBufferedに達し、
-  // かつcallbackCounterがnumFramesBufferedの倍数でない場合に、
   // ブラウザが可視状態であればspectrumDataイベントを送信します。
-  if (spectrumDataFrames.size() == numFramesBuffered &&
-      callbackCounter++ % (juce::int64)numFramesBuffered) {
-    webComponent.emitEventIfBrowserIsVisible("spectrumData", juce::var{});
+  if (audioDataFrameLeft.size() == numFramesBuffered) {
+    webComponent.emitEventIfBrowserIsVisible("audioData", juce::var{});
   }
 }
 
@@ -106,11 +109,13 @@ WebviewtutorialAudioProcessorEditor::getResource(const juce::String &url) {
   }
 
   if (urlToRetrive == "audioData.json") {
-    // Array<var> 型の frames という配列を作成し、spectrumDataFrames 内の各
-    // frame を frames に追加しています。spectrumDataFrames
+    // Array<var> 型の frames という配列を作成し、audioDataFrameLeftとRight
+    // 内の各 frame を frames に追加しています。spectrumDataFrames
     // は事前に定義されているスペクトルデータのフレームを保持する変数です。
-    juce::Array<juce::var> frames;
-    for (const auto &frame : spectrumDataFrames) frames.add(frame);
+    juce::Array<juce::var> framesLeft;
+    for (const auto &frame : audioDataFrameLeft) framesLeft.add(frame);
+    juce::Array<juce::var> framesRight;
+    for (const auto &frame : audioDataFrameRight) framesRight.add(frame);
 
     // 新しい DynamicObject
     // を作成し、それをスマートポインタ（DynamicObject::Ptr）に格納しています。
@@ -123,7 +128,8 @@ WebviewtutorialAudioProcessorEditor::getResource(const juce::String &url) {
     // 配列を設定します。std::move(frames)を使って
     // framesの所有権を移動しています。
     d->setProperty("timeResolutionMs", getTimerInterval());
-    d->setProperty("frames", std::move(frames));
+    d->setProperty("framesLeft", std::move(framesLeft));
+    d->setProperty("framesRight", std::move(framesRight));
 
     // 動的オブジェクト d を JSON 文字列に変換し、s という変数に格納しています。
     const auto s = juce::JSON::toString(d.get());

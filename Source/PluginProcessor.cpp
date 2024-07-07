@@ -172,8 +172,18 @@ void WebviewtutorialAudioProcessor::processBlock(
 
   if (!lock.isLocked()) return;
 
-  audioBuffer.addFrom(0, 0, buffer, 0, 0, buffer.getNumSamples());
-  audioBuffer.addFrom(1, 0, buffer, 1, 0, buffer.getNumSamples());
+  if (audioBuffer.getNumChannels() != totalNumInputChannels ||
+      audioBuffer.getNumSamples() != buffer.getNumSamples()) {
+    audioBuffer.setSize(totalNumInputChannels, buffer.getNumSamples());
+    audioBuffer.clear();
+  }
+  if (buffer.getNumChannels() == 1) {
+    audioBuffer.addFrom(0, 0, buffer, 0, 0, buffer.getNumSamples());
+    audioBuffer.addFrom(1, 0, buffer, 0, 0, buffer.getNumSamples());
+  } else {
+    audioBuffer.addFrom(0, 0, buffer, 0, 0, buffer.getNumSamples());
+    audioBuffer.addFrom(1, 0, buffer, 1, 0, buffer.getNumSamples());
+  }
 }
 
 //==============================================================================
@@ -191,6 +201,9 @@ void WebviewtutorialAudioProcessor::getStateInformation(
   // You should use this method to store your parameters in the memory block.
   // You could do that either as raw data, or use the XML or ValueTree classes
   // as intermediaries to make it easy to save and load complex data.
+  auto state = parameters.copyState();
+  std::unique_ptr<juce::XmlElement> xml(state.createXml());
+  copyXmlToBinary(*xml, destData);
 }
 
 void WebviewtutorialAudioProcessor::setStateInformation(const void* data,
@@ -198,6 +211,12 @@ void WebviewtutorialAudioProcessor::setStateInformation(const void* data,
   // You should use this method to restore your parameters from this memory
   // block, whose contents will have been created by the getStateInformation()
   // call.
+  std::unique_ptr<juce::XmlElement> xmlState(
+      getXmlFromBinary(data, sizeInBytes));  // ’Ç‰Á
+
+  if (xmlState.get() != nullptr)                                     // ’Ç‰Á
+    if (xmlState->hasTagName(parameters.state.getType()))            // ’Ç‰Á
+      parameters.replaceState(juce::ValueTree::fromXml(*xmlState));  // ’Ç‰Á
 }
 
 //==============================================================================
