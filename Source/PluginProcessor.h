@@ -63,6 +63,10 @@ class WebviewtutorialAudioProcessor : public juce::AudioProcessor {
   std::atomic<float>* gain = nullptr;
   std::atomic<float>* panRule = nullptr;
   std::atomic<float>* panAngle = nullptr;
+
+  juce::dsp::Gain<float> gainDSP;      // ’Ç‰Á
+  juce::dsp::Panner<float> pannerDSP;  // ’Ç‰Á
+  juce::dsp::ProcessSpec spec;         // ’Ç‰Á
   //==============================================================================
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(WebviewtutorialAudioProcessor)
 };

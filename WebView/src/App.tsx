@@ -59,16 +59,24 @@ function App() {
             gap={"3"}
           >
             <Heading>Gain</Heading>
-            <JuceSlider
-              identifier="gain"
-              defaultScaledValue={0.0}
-              orientation={"vertical"}
-              style={{
-                height: "300px",
-                width: "50px",
-              }}
-            />
-            <AudioMeter />
+            <Flex
+              justify={"center"}
+              align={"center"}
+              gap={"3"}
+              direction={"row"}
+              height={"300px"}
+            >
+              <JuceSlider
+                identifier="gain"
+                defaultScaledValue={0.0}
+                orientation={"vertical"}
+                style={{
+                  height: "300px",
+                  width: "50px",
+                }}
+              />
+              <AudioMeter />
+            </Flex>
             <JuceSliderTextBox
               identifier="gain"
               digits={2}

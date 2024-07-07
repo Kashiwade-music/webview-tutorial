@@ -52,10 +52,12 @@ void WebviewtutorialAudioProcessorEditor::timerCallback() {
   // frameという配列を作成し、processorRef.audioBufferLockのデータの各チャンネルの最大値を追加しています。
   juce::Array<juce::var> bufferLeft;
   juce::Array<juce::var> bufferRight;
-  bufferLeft.add(audioProcessor.audioBuffer.getMagnitude(
-      0, 0, audioProcessor.audioBuffer.getNumSamples()));
-  bufferRight.add(audioProcessor.audioBuffer.getMagnitude(
-      1, 0, audioProcessor.audioBuffer.getNumSamples()));
+  bufferLeft.add(
+      juce ::Decibels::gainToDecibels(audioProcessor.audioBuffer.getMagnitude(
+          0, 0, audioProcessor.audioBuffer.getNumSamples())));
+  bufferRight.add(
+      juce ::Decibels::gainToDecibels(audioProcessor.audioBuffer.getMagnitude(
+          1, 0, audioProcessor.audioBuffer.getNumSamples())));
 
   // reset
   audioProcessor.audioBuffer.clear();

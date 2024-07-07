@@ -29,14 +29,15 @@ WebviewtutorialAudioProcessor::WebviewtutorialAudioProcessor()
           *this, nullptr, juce::Identifier("tutorial"),
           {
               std::make_unique<juce::AudioParameterFloat>(
-                  "gain",                                          // ’Ç‰Á
-                  "Gain",                                          // ’Ç‰Á
-                  juce::NormalisableRange<float>(-100.0f, 10.0f),  // ’Ç‰Á
-                  0.0f),                                           // ’Ç‰Á
+                  "gain",  // ’Ç‰Á
+                  "Gain",  // ’Ç‰Á
+                  juce::NormalisableRange<float>(-100.0f, 10.0f, 0.01,
+                                                 2),  // ’Ç‰Á
+                  0.0f),                              // ’Ç‰Á
               std::make_unique<juce::AudioParameterChoice>(
                   "panrule", "Pan Rule",
-                  juce::StringArray("Rotate", "linear", "balanced", "sin3dB",
-                                    "sin4p5dB", "sin6dB", "squareRoot3dB",
+                  juce::StringArray("linear", "balanced", "sin3dB", "sin4p5dB",
+                                    "sin6dB", "squareRoot3dB",
                                     "squareRoot4p5dB"),
                   0),
               std::make_unique<juce::AudioParameterFloat>(
@@ -108,6 +109,13 @@ void WebviewtutorialAudioProcessor::prepareToPlay(double sampleRate,
                                                   int samplesPerBlock) {
   // Use this method as the place to do any pre-playback
   // initialisation that you need..
+
+  spec.maximumBlockSize = samplesPerBlock;  // ’Ç‰Á
+  spec.numChannels = 2;                     // ’Ç‰Á
+  spec.sampleRate = sampleRate;             // ’Ç‰Á
+
+  gainDSP.prepare(spec);    // ’Ç‰Á
+  pannerDSP.prepare(spec);  // ’Ç‰Á
 }
 
 void WebviewtutorialAudioProcessor::releaseResources() {
@@ -156,17 +164,15 @@ void WebviewtutorialAudioProcessor::processBlock(
   for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
     buffer.clear(i, 0, buffer.getNumSamples());
 
-  // This is the place where you'd normally do the guts of your plugin's
-  // audio processing...
-  // Make sure to reset the state if your inner loop is processing
-  // the samples and the outer loop is handling the channels.
-  // Alternatively, you can process the samples with the channels
-  // interleaved by keeping the same state.
-  for (int channel = 0; channel < totalNumInputChannels; ++channel) {
-    auto* channelData = buffer.getWritePointer(channel);
+  gainDSP.setGainDecibels(*gain);
+  pannerDSP.setRule(static_cast<juce::dsp::PannerRule>((int)*panRule));
+  pannerDSP.setPan(*panAngle / 100);
 
-    // ..do something to the data...
-  }
+  juce::dsp::AudioBlock<float> audioBlock(buffer);
+  juce::dsp::ProcessContextReplacing<float> context(audioBlock);
+
+  gainDSP.process(context);
+  pannerDSP.process(context);
 
   const juce::SpinLock::ScopedTryLockType lock(audioBufferLock);
 
@@ -178,12 +184,17 @@ void WebviewtutorialAudioProcessor::processBlock(
     audioBuffer.clear();
   }
   if (buffer.getNumChannels() == 1) {
-    audioBuffer.addFrom(0, 0, buffer, 0, 0, buffer.getNumSamples());
-    audioBuffer.addFrom(1, 0, buffer, 0, 0, buffer.getNumSamples());
+    audioBuffer.setSample(0, 0,
+                          buffer.getMagnitude(0, 0, buffer.getNumSamples()));
+    audioBuffer.setSample(1, 0,
+                          buffer.getMagnitude(0, 0, buffer.getNumSamples()));
   } else {
-    audioBuffer.addFrom(0, 0, buffer, 0, 0, buffer.getNumSamples());
-    audioBuffer.addFrom(1, 0, buffer, 1, 0, buffer.getNumSamples());
+    audioBuffer.setSample(0, 0,
+                          buffer.getMagnitude(0, 0, buffer.getNumSamples()));
+    audioBuffer.setSample(1, 0,
+                          buffer.getMagnitude(1, 0, buffer.getNumSamples()));
   }
+  DBG(audioBuffer.getMagnitude(0, 0, audioBuffer.getNumSamples()));
 }
 
 //==============================================================================
